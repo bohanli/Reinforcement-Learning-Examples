@@ -740,3 +740,302 @@ Each iteration of MCTS proceeds in four stages (Figure 8.11, Page 185):
 2. expansian
 3. simulation
 4. backpropogation
+
+
+# Reinforcement Learning
+# Part II -- Approximate Solution Methods
+tabular methods --> approximation
+- motivation
+    1. ininite state space
+    2. generalization
+
+## Chapter 9 | On-policy Prediction with Approximation
+
+### Value-function Approximation
+
+backups: as updates to an estimated value function that **shift its value** at particular states **toward a “backed-up value” for that state.**
+- Monte Carlo backup: $S_t \mapsto G_t$
+- TD(0) backup: $S_t \mapsto R_{t+1} + \gamma \hat{v}(S_{t+1}, \theta_{t})$
+- n-step TD backup: $S_t \mapsto G_t^n$
+- DP: $S_t \mapsto E(R_{t+1} + \gamma \hat{v}(S_{t+1}, \theta_{t})|S_t=s)$
+
+the table entry for s’s estimated value has simply been shifted a fraction of the way toward g, and the estimated values of all other states were left unchanged.
+
+However, not all function approximation methods are equally well suited for use in reinforcement learning.
+- Online training
+- capacity to handle nonstationary target functions (target functions that change over time).
+
+### The Prediction Objective (MSVE)
+
+For approximation methods, an update at one state affects many others, and it is not possible to get all states exactly correct, which is different from tabular methods.
+
+Mean Squared Value Error (MSVE):
+$$ MSVE(\theta) = \sum_{s\in\mathcal{S} } d(s) [v_\pi(s)-\hat{v}(s, \theta)]^2 $$
+
+d(s) is the fraction of time spent in s under the target policy $\pi$ (on-policy distribution) -- computation details available on Page 193 of the book.
+
+Shortcoming: It is not completely clear that the MSVE is the right performance objective for RL -- after all, our ultimate purpose is to use value function to **find a better policy**.
+
+### Stochastic-gradient and Semi-gradient Methods
+
+a natural learning algorithm for this case is n-step semi-gradient TD, which includes gradient MC and semi-gradient TD(0) algorithms as the special cases when $n=\infty$ and $n=1$
+
+Stochastic gradient- descent (SGD)
+
+$\theta_{t+1} = \theta_{t+1} - \frac{1}{2} \alpha \nabla [v_\pi(s)-\hat{v}(s, \theta)]^2$
+
+$=\theta_{t+1} + (v_\pi(s)-\hat{v}(s, \theta)) \nabla \hat{v}(s, \theta)$
+
+**Gradient Monte Carlo Algorithm for Approximating $\hat{v} \approx v^\pi$**
+- generate infinite number of episodes
+- for each episode, traverse each step of episode:
+    - $=\theta_{t+1} + (G_t-\hat{v}(s, \theta)) \nabla \hat{v}(s, \theta)$
+
+Semi-gradient TD methods are not true gradient methods. In such bootstrapping methods (including DP), the weight vector appears in the update target, yet this is not taken into account in computing the gradient—thus they are semi-gradient methods.
+
+Nevertheless, good results can be obtained for semi-gradient methods in the special case of linear function approximation
+
+**Semi-gradient TD(0) for estimating $\hat{v} \approx v^\pi$ -- (bootstrapping)**
+- Repeat (for each episode):
+    - init $S$
+    - Repeat (for each step of episode):
+        - choose $A ~ \pi(\cdot|s)$
+        - Take action A, observe $R, S'$
+        - $=\theta_{t+1} + (R_t + \gamma \hat{v}(s', \theta) -\hat{v}(s, \theta)) \nabla \hat{v}(s, \theta)$
+        - $S \leftarrow S'$
+
+### Linear Methods
+
+Convergence.
+
+#### 1. Polynomials
+this case generalizes poorly in the online learning setting typically considered in reinforcement learning.
+
+#### 2. Fourier Basis
+#### 3. Coarse Coding
+#### 4. Tile Coding
+Tile coding is a form of coarse coding for multi-dimensional continuous spaces that is flexible and computationally efficient.
+
+It may be the most practical feature representation for modern sequential digital computers.
+
+I think it is a kind of feature discretization, which is very useful in machine learning engineering.
+
+#### 5. Radial Basis Functions
+Radial basis functions are useful for one- or two-dimensional tasks in which a smoothly varying response is important.
+
+### Nonlinear Function Approximation: Artificial Neural Networks
+
+### Least Square TD
+
+LSTD is the most data-e cient linear TD prediction method, but requires computation proportional to the square of the number of weights, whereas all the other methods are of complexity linear in the number of weights.
+
+### Summary
+Linear semi-gradient n-step TD is guaranteed to converge under standard condi- tions, for all n, to a MSVE that is within a bound of the optimal error. This bound is always tighter for higher n and approaches zero as $n \rightarrow \infty$. However, in practice that choice results in very slow learning, and some degree of bootstrapping ($1 < n < \infty$) is usually preferrable.
+
+## Chapter 10 | On-policy Control with Approximation
+
+### Episodic Semi-gradient Control
+
+Episodic Semi-gradient Sarsa for Control is almost the same as tabular Sarsa. The only difference is that $q(S, A)$ is approximated by $\hat{q}(S,A,\theta)$
+
+### n-step Semi-gradient Sarsa
+
+### Average Reward: A New Problem Setting for Continuing Tasks
+
+continuing problems: no discounting
+
+$$\eta(\pi) = \sum_s d_\pi(s) \sum_a \pi(a|s) \sum_{s', r}p(s', r|s, a) r $$
+
+ergodicity: $\eta(pi)$ (it is actually $lim_{T\rightarrow \infty }Pr(S_t  = s|A_{0:t-1}, S_0 \sim \pi$) exist and to be independent of $S_0$
+- temporal expectation = spatial expectation
+- It means that where the MDP starts or any early decision made by the agent can have only a temporary e↵ect; in the long run your expectation of being in a state depends only on the policy and the MDP transition probabilities.
+- Ergodicity is suffcient to guarantee the existence of the limits in the equations above.
+
+In the average-reward setting, returns are defined in terms of differences between rewards and the average reward:
+$$G_t = R_{t+1} - \eta(\pi) +  R_{t} - \eta(\pi) + \ldots$$
+
+Differential value functions also have Bellman equations
+
+### Deprecating the Discounted Setting
+
+For continue problems, discounting is not useful. The proof can be done via the summation of geometric progression (GP)
+
+### n-step Differential Semi-gradient Sarsa
+
+The n-step TD error has the same form as before. The only difference is how $G_t$ is calculated.
+
+## Chapter 11 | Off-policy Methods with Approximation  
+
+The challenge of off-policy learning can be divided into two parts
+1. one which arises in the tabular case
+    - has to do with the target of the learning update
+    - importance sampling and rejection sampling
+2. the other only in the approximate
+    - has to do with the distribution of the updates
+    - the distribution of updates in the off-policy case is not according to the on-policy distribution
+    - Two approaches
+        1. to use importance sampling methods again, to warp the update distribution back to the on-policy distribution, so that semi- gradient methods are guaranteed to converge (in the linear case).
+        2. to develop true gradient methods that do not rely on any special distribution for stability.
+
+This is a cutting-edge research area, and it is not clear which of these approaches is most effective in practice.
+
+### Semi-gradient Methods
+
+It is just like the corresponding on-policy algorithm except for the addition of $\rho_t$
+
+$$\theta_{t+1} = \theta_{t} + \alpha \rho_t \delta_t \nabla \hat{v} (S_t, \theta) $$
+
+### Baird’s Counterexample
+
+Baird’s counterexample is one of the most straightforward cases where semi-gradient and other simple algorithms are unstable and diverge.
+
+### The Deadly Triad
+
+The danger of instability and divergence arises whenever we combine three things （any two of these three is fine, though）:
+1. training on a distribution of transitions other than that naturally generated by the process whose expectation is being estimated (e.g., off-policy learning)
+2. scalable function approximation (e.g., linear semi-gradient)
+3. bootstrapping (e.g, DP, TD learning)
+
+Note that
+1. the danger is not due to control or GPI; it arises prediction as well.
+2. It is also not due to learning, as it occurs in planning methods such as dynamic programming.
+
+## Chapter 12 | Eligibility Traces
+
+### The $\lambda$-return
+
+The TD($\lambda$) algorithm can be understood as one particular way of averaging n-step backups. This average contains all the n-step backups, each weighted proportional to $\lambda^{n-1}$
+
+$$ G^\lambda_t = (1-\lambda) \sum_{n=1}^\infty \lambda^{n-1} G^{n}_t$$
+
+we can separate these post-termination terms from the main sum, yielding
+
+$$ G^\lambda_t = (1-\lambda) \sum_{n=1}^{T-t-1}\lambda^{n-1} G^{n}_t + \lambda^{T-t-1} G_t$$
+
+1. $\lambda=1$ -- Monte Carlo algorithm
+2. $\lambda=0$ -- $G_t^(1)$, a one-step TD method
+
+off-line $\lambda$-return algorithm.
+
+### TD($\lambda$)
+
+TD($\lambda$) improves over the off-line $\lambda$-return algorithm in three ways
+1. it updates the weight vector on every step of an episode rather than only at the end, and thus its estimates may be better sooner.
+2. its computations are equally distributed in time rather that all at the end of the episode.
+3. it can be applied to continuing problems rather than just episodic problems.
+
+Semi-gradient TD($\lambda$) for value prediction \
+In each iteration
+- The eligibility trace: $e_t = \nabla \hat{v}(S_t, \theta_t) + \gamma\lambda e_{t-1}$
+    - the trace is said to indicate the eligibility of each component of the weight vector for undergoing learning changes should a reinforcing event occur.
+- TD error: $\delta_t = R_{t+1} + \gamma V(S_{t+1}) - V(S_t)$ (the same as before)
+- $\theta_{t+1} = \theta_t + \alpha\delta_t e_t$
+
+**TD(0)** \
+If $\lambda=0$, the trace at t is exactly the value gradient corresponding to S_t. Thus the TD($\lambda$) update reduces to the one-step semi-gradient TD update treated in Chapter 9 (and, in the tabular case, to the simple TD rule).
+
+**TD(1)**
+- TD(1) a way of implementing Monte Carlo algorithms that is more general than those presented earlier and that significantly increases their range of applicability. Whereas the earlier Monte Carlo methods were limited to episodic tasks, TD(1) can be applied to discounted continuing tasks as well.
+- Moreover, TD(1) can be performed incrementally and on-line, while Monte Carlo methods can learn nothing from an episode until it is over.
+
+The primary weakness of the off-line $\lambda$-return algorithm
+- it is off-line: it learns nothing until the episode is finished.
+
+Disadvantage of TD($\lambda$): \
+- TD($\lambda$) is more sentitive to $\alpha$
+
+### An On-line Forward View
+
+h-truncated $\lambda$-return
+
+$$ G^{\lambda|h}_t = (1-\lambda) \sum_{n=1}^{h-t-1}\lambda^{n-1} G^{n}_t + \lambda^{h-t-1} G_t^{h-t}$$
+
+The online $\lambda$-return algorithm
+
+ it is very complex
+
+### True Online TD($\lambda$)
+
+### Dutch Traces in Monte Carlo Learning
+
+## Chapter 13 | Policy Gradient Methods
+
+In this chapter we consider methods that instead learn a parameterized policy that can select actions without consulting a value function.
+
+$$\theta_{t+1} = \theta_{t} + \alpha \hat{\nabla \eta(\theta_t)} $$
+
+All methods that follow this general schema we call policy gradient methods.
+- $\eta(\theta_t)$: performance measure
+    - episodic case: $\eta(\theta_t) = v_{\pi_{\theta}}(s_0)$ (the value of the start state under the parameterized policy)
+    - continuing case: $\eta(\theta_t) = r(\theta)$ (average reward rate)
+- A value function may still be used to learn the policy weights, but is not required. Methods that learn approximations to both policy and value functions are often called actor–critic methods
+    - ‘actor’ is a reference to the learned policy
+    - ‘critic’ refers to the learned value function, usually a state- value function.
+
+### Policy Approximation and its Advantages
+
+the policy can be parameterized in any way, as long as $\pi(a|s \theta)$ is differentiable with respect to its weights ($\equiv$ that $\nabla_\theta \pi(a|s \theta$ exists and is always finite$)
+ - In practice, to ensure exploration we generally require that the policy never becomes deterministic $0 < \pi(a|s \theta) < 1$
+
+**advantages of policy-based methods over action-value methods**
+1. selecting actions according to the softmax in action preferences can approach determinism, whereas with $\epsilon$-greedy action selection over action values, there is always an $\epsilon$ probability of selecting a random action.
+2. the policy may be a simpler function to approximate for some problems
+3. In problems with significant function approximation, the best approximate policy may be stochastic. Action-value methods have no natural way of finding stochastic optimal policies, whereas policy approximating methods can.
+4. the choice of policy parameterization is sometimes a good way of injecting prior knowledge about the desired form of the policy into the rein- forcement learning system.
+
+### The Policy Gradient Theorem
+
+policy gradient theorem:
+
+$$\nabla \eta(pi) = \sum_s d_\pi(s) \sum_a q_\pi(s, a) \nabla_\theta \pi(a|s, \theta)$$
+
+### REINFORCE: Monte Carlo Policy Gradient
+
+repeat forever
+- generate an episode, following the latest $\pi_\theta$
+    - For each step of the episode $t = 1, \ldots, T-1$
+        - $\theta_{t+1} = \theta_{t} + \alpha \gamma^t G_t    \frac{\nabla_\theta \pi(A_t|S_t, \theta)}{\pi(A_t|S_t, \theta)}$
+
+- The update increases the weight vector in this direction proportional to the return (numertor)
+    - because it causes the weights to move most in the directions that favor actions that yield the highest return
+- The update is also inversely proportional to the action probability. (denominator)
+    - because otherwise actions that are selected frequently are at an advantage (the updates will be more often in their direction) and might win out even if they do not yield the highest return.
+
+- Advantage: As a stochastic gradient method, REINFORCE has good theoretical convergence properties.
+- Disadvantage: as a Monte Carlo method REINFORCE may be of high variance and thus slow to learn.
+
+### REINFORCE with Baseline
+
+$$\nabla \eta(pi) = \sum_s d_\pi(s) \sum_a (q_\pi(s, a) - b(s)) \nabla_\theta \pi(a|s, \theta)$$
+
+The baseline can be any function, even a random variable, as long as it does not vary with a.
+
+the equation remains true, because $b(s) \sum_a  \nabla_\theta \pi(a|s, \theta) = 0$. The baseline leaves the expected value of the update un- changed, but it can have a large e↵ect on its variance.
+
+The idea of baseline is generalized from gradient bandit method. In the bandit algorithms the baseline was just a number (the average of the rewards seen so far), but for MDPs the baseline should vary with state.
+
+One natural choice for the baseline is an estimate of the state value $\hat{v}(S_t, w)$. This can be calculated with Gradient Monte Carlo Prediction Algorithm, which is introduced in Chapter 9.
+
+### Actor-Critic Methods
+
+REINFORCE-with-baseline is not an actor-critic method because its state-value function is used only as a baseline, not as a critic.
+- Reason: it is not used for **bootstrapping** (updating a state from the estimated values of subsequent states), but only as a baseline for the state being updated.
+    - the bias introduced through bootstrapping and reliance on the state representation is often on balance beneficial because it reduces variance and accelerates learning.
+- REINFORCE with baseline is unbiased and will converge asymptotically to a local minimum, but like all Monte Carlo methods it tends to be slow to learn (high variance) and inconvenient to implement online or for continuing problems.
+
+**One-step Actor-Critic (episodic)**
+One-step actor-critic methods replace the full return of REINFORCE with the one-step return.
+- fully online and incremental
+- Extended to
+    - multi-step methods: $G_t^{(1)}$ --> $G_t^{(n)}$
+    -  **Actor-Critic with Eligibility Traces (episodic)**: $G_t^(1)$ --> $G_t^\lambda$
+
+### Policy Gradient for Continuing Problems (Average Reward Rate)
+
+With some alternate definitions, the policy gradient theorem as given for the episodic case remains true for the continuing case.
+
+### Policy Parameterization for Continuous Actions
+
+Instead of computing learned probabilities for each of the many actions, we instead compute learned the statistics of the probability distribution. For example, the action set might be the real numbers, with actions chosen from a normal (Gaussian) distribution.
+
+The End
