@@ -16,9 +16,6 @@ Examples:
 Examples: 
 - Multi_Arm_Bandit
 
-## Finite Markov Decision Processes
-> Finite MDPs are all you need to understand 90% of modern reinforcement learning. The Bellman equation is the core.
-
 ## Dynamic Programming
 > DP requires the complete probability distributions of all possible transitions.
 > Policy Iteration: Policy Evaluation + Policy Improvement.
