@@ -49,7 +49,7 @@ Examples:
 
 # Reading Notes
 - RL_Reading_Notes.md
-  - Notes that I took when I read _Reinforcement Learning: An Introduction_.
+  - Notes that I took when I read _Reinforcement Learning: An Introduction_.
 - A_Brief_Review.md
   - A brief review for this book.
 
